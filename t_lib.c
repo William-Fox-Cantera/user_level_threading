@@ -27,9 +27,10 @@ void t_yield() {
         wantsToRun = ready;
         while(*tracker)
           tracker = &(*tracker)->next;
+
         *tracker = currentlyRunning;   // Put the currently running thread at the end of the ready list
         ready = ready->next; // Push head forward
-        // Make the running "queue" hold the thread at the head of the ready list
+        // Make the running queue hold the thread at the head of the ready list
         wantsToRun->next = NULL;
         running = wantsToRun;
         swapcontext(currentlyRunning->threadContext, wantsToRun->threadContext);
@@ -68,7 +69,7 @@ void t_init() {
  */
 int t_create(void (*func)(int), int id, int pri) {
     size_t sz = 0x10000;
-    ucontext_t *uc = (ucontext_t *) malloc(sizeof(ucontext_t)+20);
+    ucontext_t *uc = (ucontext_t *) malloc(sizeof(ucontext_t));
     getcontext(uc); // Gets the context for the thread
 
     // Given, stores info for stackpointer, stack size, stack flags...
@@ -99,7 +100,14 @@ int t_create(void (*func)(int), int id, int pri) {
  * @return None
  */
 void t_shutdown() {
-    // One CPU, one running thread to free
+    struct tcb *temp = ready, *temp2;
+    while(temp) { // Free the ready queue
+      temp2 = temp;
+      temp = temp->next;
+      free(temp2->threadContext->uc_stack.ss_sp);
+      free(temp2->threadContext);
+      free(temp2);
+    } // Free the one running
     free(running->threadContext->uc_stack.ss_sp);
     free(running->threadContext);
     free(running);
