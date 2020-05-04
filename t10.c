@@ -23,6 +23,7 @@ void read_function(int val)
     printf("thread %d leaving 1st CS...\n", val);
   sem_signal(mutex);
 
+
   sem_wait(mutex);
     printf("thread %d entering 2nd CS...\n", val);
     resource = 55;

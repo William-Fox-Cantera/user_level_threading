@@ -151,17 +151,21 @@ int sem_init(sem_t **sp, int sem_count) {
  * @return None
  */
 void sem_wait(sem_t *sp) {
-    while (sp->count < 1) {
-		  tcb *wantsToRun = ready, *currentlyRunning = running, **tracker;
-      running = wantsToRun;
+    sighold();
+    sp->count--; // p operation
+    if (sp->count < 0) {
+		  tcb *currentlyRunning = running, **tracker;
+      running = ready;
       ready = ready->next;
       tracker = &(sp->q);
       while (*tracker) tracker = &(*tracker)->next;
-      *tracker = currentlyRunning;
-		  wantsToRun->next = NULL;
-		  swapcontext(currentlyRunning->threadContext, wantsToRun->threadContext);
+      *tracker = currentlyRunning; // Put it at the end of the sem_t list
+      running->next = NULL; // Cut away from ready
+		  swapcontext(currentlyRunning->threadContext, running->threadContext);
+      sigrelse();
+    } else {
+      sigrelse();
     }
-    sp->count--;
 }
 
 
@@ -172,13 +176,18 @@ void sem_wait(sem_t *sp) {
  * @return None
  */
 void sem_signal(sem_t *sp) {
+    sighold();
     sp->count++; // v operation
-    if (!sp->q) return; // If no tcb exists yet, don't run
-    tcb **tracker = &ready, *semTemp = sp->q;
-    sp->q = sp->q->next;
-    semTemp->next = NULL;
-    while (*tracker) tracker = &(*tracker)->next; // Get to the last tcb
-    *tracker = semTemp;
+    if (sp->count <= 0) { // If no tcb exists yet, don't run
+        tcb **tracker = &ready, *semTemp = sp->q;
+        sp->q = sp->q->next; // Remove it
+        semTemp->next = NULL;
+        while (*tracker) tracker = &(*tracker)->next; // Get to the last tcb
+        *tracker = semTemp; // Push tcb to ready
+        sigrelse();
+    } else {
+        sigrelse();
+    }
   } 
 
 

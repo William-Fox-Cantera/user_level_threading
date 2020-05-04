@@ -64,5 +64,11 @@ dp.o: dp.c ud_thread.h Makefile
 dp: dp.o t_lib.a Makefile
 	${CC} ${CFLAGS} dp.o t_lib.a -o dp
 
+shone.o: shone.c ud_thread.h Makefile
+	${CC} ${CFLAGS} -c shone.c
+
+shone: shone.o t_lib.a Makefile
+	${CC} ${CFLAGS} shone.o t_lib.a -o shone
+
 clean:
 	rm -f t_lib.a ${EXECS} ${LIBOBJS} ${TSTOBJS} t1 t1x t3 t10
