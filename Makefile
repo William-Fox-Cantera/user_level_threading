@@ -40,11 +40,29 @@ t1.o: t1.c ud_thread.h Makefile
 t1: t1.o t_lib.a Makefile
 	${CC} ${CFLAGS} t1.o t_lib.a -o t1
 
-t2.o: t2.c ud_thread.h Makefile
-	${CC} ${CFLAGS} -c t2.c
+t1x.o: t1x.c ud_thread.h Makefile
+	${CC} ${CFLAGS} -c t1x.c
 
-t2: t2.o t_lib.a Makefile
-	${CC} ${CFLAGS} t2.o t_lib.a -o t2
+t1x: t1x.o t_lib.a Makefile
+	${CC} ${CFLAGS} t1x.o t_lib.a -o t1x
+
+t3.o: t3.c ud_thread.h Makefile
+	${CC} ${CFLAGS} -c t3.c
+
+t3: t3.o t_lib.a Makefile
+	${CC} ${CFLAGS} t3.o t_lib.a -o t3
+
+t10.o: t10.c ud_thread.h Makefile
+	${CC} ${CFLAGS} -c t10.c
+
+t10: t10.o t_lib.a Makefile
+	${CC} ${CFLAGS} t10.o t_lib.a -o t10
+
+dp.o: dp.c ud_thread.h Makefile
+	${CC} ${CFLAGS} -c dp.c
+
+dp: dp.o t_lib.a Makefile
+	${CC} ${CFLAGS} dp.o t_lib.a -o dp
 
 clean:
-	rm -f t_lib.a ${EXECS} ${LIBOBJS} ${TSTOBJS} t1 t2
+	rm -f t_lib.a ${EXECS} ${LIBOBJS} ${TSTOBJS} t1 t1x t3 t10

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <ucontext.h>
 #include <sys/mman.h>
+#include <signal.h>
 
 //Mine 
 
@@ -14,4 +15,12 @@ struct tcb {
     int threadPriority;
     ucontext_t *threadContext;
     struct tcb *next;
-}*tcb;
+};
+
+typedef struct tcb tcb;
+
+// Semaphore Node
+typedef struct {
+    int count;
+    tcb *q;
+} sem_t;

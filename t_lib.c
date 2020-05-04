@@ -8,8 +8,8 @@
  */
 
 
-struct tcb *running; // Make thread control blocks for the ready and running queues
-struct tcb *ready;
+tcb *running; // Make thread control blocks for the ready and running queues
+tcb *ready;
 
 
 /**
@@ -22,12 +22,10 @@ struct tcb *ready;
  */
 void t_yield() {
     if (ready) { // Make sure the ready queue isn't empty
-        struct tcb *currentlyRunning, *wantsToRun, **tracker = &ready;
+        tcb *currentlyRunning, *wantsToRun, **tracker = &ready;
         currentlyRunning = running;
         wantsToRun = ready;
-        while(*tracker)
-          tracker = &(*tracker)->next;
-
+        while(*tracker) tracker = &(*tracker)->next;
         *tracker = currentlyRunning;   // Put the currently running thread at the end of the ready list
         ready = ready->next; // Push head forward
         // Make the running queue hold the thread at the head of the ready list
@@ -46,12 +44,11 @@ void t_yield() {
  * @return None 
  */
 void t_init() {
-    struct tcb *temp = (struct tcb *) malloc(sizeof(tcb));
+    tcb *temp = (tcb *) malloc(sizeof(tcb));
     temp->threadContext = (ucontext_t *) malloc(sizeof(ucontext_t));
     temp->threadID = 0; // Garbage value
     temp->threadPriority = 0; // Assume low priority to begin 
     temp->next = NULL; // Initially it is just a single node
-
     getcontext(temp->threadContext); // let temp be the context of main() 
     running = temp;
     ready = NULL;
@@ -71,20 +68,17 @@ int t_create(void (*func)(int), int id, int pri) {
     size_t sz = 0x10000;
     ucontext_t *uc = (ucontext_t *) malloc(sizeof(ucontext_t));
     getcontext(uc); // Gets the context for the thread
-
     // Given, stores info for stackpointer, stack size, stack flags...
     uc->uc_stack.ss_sp = malloc(sz);
     uc->uc_stack.ss_size = sz;
     uc->uc_stack.ss_flags = 0;
     uc->uc_link = running->threadContext; 
     makecontext(uc, (void (*)(void)) func, 1, id);
-    
     // Standard linked list push operation
-    struct tcb **tracker = &ready, *customBlock;
-    while(*tracker) // Get to last node, no need to worry about edge case
-        tracker = &(*tracker)->next;
+    tcb **tracker = &ready, *customBlock;
+    while(*tracker) tracker = &(*tracker)->next;
     // New thread control, block for the new thread
-    customBlock = (struct tcb *) malloc(sizeof(tcb));
+    customBlock = (tcb *) malloc(sizeof(tcb));
     customBlock->threadContext = uc;
     customBlock->threadID = id;
     customBlock->threadPriority = pri;
@@ -100,7 +94,7 @@ int t_create(void (*func)(int), int id, int pri) {
  * @return None
  */
 void t_shutdown() {
-    struct tcb *temp = ready, *temp2;
+    tcb *temp = ready, *temp2;
     while(temp) { // Free the ready queue
       temp2 = temp;
       temp = temp->next;
@@ -129,4 +123,71 @@ void t_terminate() {
     ready = ready->next;
     running->next = NULL; // One running thread
     setcontext(running->threadContext);
+}
+
+//______________________________________________________________________________________________________________________
+// Semaphore functions
+
+
+/**
+ * sem_init, initializes a semaphore with a count, pointed to by stack pointer.
+ * 
+ * @param sp -> Stack pointer
+ * @param sem_count -> the count it starts at
+ * @return sem_count -> int, the count
+ */
+int sem_init(sem_t **sp, int sem_count) {
+    *sp = malloc(sizeof(sem_t));
+    (*sp)->count = sem_count;
+    (*sp)->q = NULL; // No thread control block starting out
+    return sem_count;
+}
+
+
+/**
+ * sem_wait, current thread does a wait (p) on the specified semaphore.
+ * 
+ * @param sp -> sem_t, the semaphore to wait on
+ * @return None
+ */
+void sem_wait(sem_t *sp) {
+    while (sp->count < 1) {
+		  tcb *wantsToRun = ready, *currentlyRunning = running, **tracker;
+      running = wantsToRun;
+      ready = ready->next;
+      tracker = &(sp->q);
+      while (*tracker) tracker = &(*tracker)->next;
+      *tracker = currentlyRunning;
+		  wantsToRun->next = NULL;
+		  swapcontext(currentlyRunning->threadContext, wantsToRun->threadContext);
+    }
+    sp->count--;
+}
+
+
+/**
+ * sem_signal, the thread that signals becomes ready, and the first waiting thread, if there is any, becomes ready.
+ * 
+ * @param sp -> sem_t, the semaphore to signal
+ * @return None
+ */
+void sem_signal(sem_t *sp) {
+    sp->count++; // v operation
+    if (!sp->q) return; // If no tcb exists yet, don't run
+    tcb **tracker = &ready, *semTemp = sp->q;
+    sp->q = sp->q->next;
+    semTemp->next = NULL;
+    while (*tracker) tracker = &(*tracker)->next; // Get to the last tcb
+    *tracker = semTemp;
+  } 
+
+
+/** 
+ * sem_destroy, frees all memory allocated to the given semaphore.
+ * 
+ * @param sp -> sem_t, the semaphore to be freed
+ * @return None
+ */
+void sem_destroy(sem_t **sp) {
+    free(*sp); // That's it
 }
