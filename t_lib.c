@@ -154,18 +154,17 @@ void sem_wait(sem_t *sp) {
     sighold();
     sp->count--; // p operation
     if (sp->count < 0) {
-		  tcb *currentlyRunning = running, **tracker;
-      running = ready;
-      ready = ready->next;
-      tracker = &(sp->q);
-      while (*tracker) tracker = &(*tracker)->next;
-      *tracker = currentlyRunning; // Put it at the end of the sem_t list
-      running->next = NULL; // Cut away from ready
-		  swapcontext(currentlyRunning->threadContext, running->threadContext);
-      sigrelse();
-    } else {
-      sigrelse();
-    }
+        tcb *currentlyRunning = running, **tracker;
+        running = ready;
+        ready = ready->next;
+        tracker = &(sp->q);
+        while (*tracker) tracker = &(*tracker)->next;
+        *tracker = currentlyRunning; // Put it at the end of the sem_t list
+        running->next = NULL; // Cut away from ready
+        swapcontext(currentlyRunning->threadContext, running->threadContext);
+        sigrelse();
+    } else 
+        sigrelse();
 }
 
 
@@ -185,9 +184,8 @@ void sem_signal(sem_t *sp) {
         while (*tracker) tracker = &(*tracker)->next; // Get to the last tcb
         *tracker = semTemp; // Push tcb to ready
         sigrelse();
-    } else {
+    } else 
         sigrelse();
-    }
   } 
 
 

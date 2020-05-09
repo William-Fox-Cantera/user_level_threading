@@ -17,6 +17,10 @@ LIBSRCS = t_lib.c
 
 TSTSRCS = test00.c
 
+
+# Make all the tests
+all: t1 t1x t3 t10 dp
+
 # ar creates the static thread library
 
 t_lib.a: ${LIBOBJS} Makefile
@@ -71,4 +75,4 @@ shone: shone.o t_lib.a Makefile
 	${CC} ${CFLAGS} shone.o t_lib.a -o shone
 
 clean:
-	rm -f t_lib.a ${EXECS} ${LIBOBJS} ${TSTOBJS} t1 t1x t3 t10
+	rm -f t_lib.a ${EXECS} ${LIBOBJS} ${TSTOBJS} *.o t1 t1x t3 t10 shone dp 
