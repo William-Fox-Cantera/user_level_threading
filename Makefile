@@ -19,7 +19,7 @@ TSTSRCS = test00.c
 
 
 # Make all the tests
-all: t1 t1x t3 t10 dp
+all: t1 t1x t3 t10 diningPhilosophers shone
 
 # ar creates the static thread library
 
@@ -62,11 +62,11 @@ t10.o: t10.c ud_thread.h Makefile
 t10: t10.o t_lib.a Makefile
 	${CC} ${CFLAGS} t10.o t_lib.a -o t10
 
-dp.o: dp.c ud_thread.h Makefile
-	${CC} ${CFLAGS} -c dp.c
+diningPhilosophers.o: diningPhilosophers.c ud_thread.h Makefile
+	${CC} ${CFLAGS} -c diningPhilosophers.c
 
-dp: dp.o t_lib.a Makefile
-	${CC} ${CFLAGS} dp.o t_lib.a -o dp
+diningPhilosophers: diningPhilosophers.o t_lib.a Makefile
+	${CC} ${CFLAGS} diningPhilosophers.o t_lib.a -o diningPhilosophers
 
 shone.o: shone.c ud_thread.h Makefile
 	${CC} ${CFLAGS} -c shone.c
@@ -75,4 +75,4 @@ shone: shone.o t_lib.a Makefile
 	${CC} ${CFLAGS} shone.o t_lib.a -o shone
 
 clean:
-	rm -f t_lib.a ${EXECS} ${LIBOBJS} ${TSTOBJS} *.o t1 t1x t3 t10 shone dp 
+	rm -f t_lib.a ${EXECS} ${LIBOBJS} ${TSTOBJS} *.o t1 t1x t3 t10 shone diningPhilosophers
